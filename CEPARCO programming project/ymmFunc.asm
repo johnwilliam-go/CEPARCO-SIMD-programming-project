@@ -1,22 +1,23 @@
-bits 64
-default rel
-
-section .data
-	increment dq 4.25
 section .text
-	global ymmFunc
+
+global ymmFunc
+
 ymmFunc:
-	vbroadcastsd ymm1, qword [increment]
-	xor edi, edi
-	sar rcx, 2 ; process 4 double-precision floats at a time
+    mov r10, [rsp+40]
+    xor rax, rax
 L1:
-	vmovupd ymm0, [rdx + rdi]
-	vaddpd ymm0, ymm0, ymm1
-	vmovupd [rdx + rdi], ymm0
+    cmp rax, rcx
+    jae done
+    vmovups ymm0, [r8 + rax*4]
+    vmovups ymm1, [r9 + rax*4]
+    vmovups ymm2, [r10 + rax*4]
 
-	add rdi, 8*4 ; move to the next 4 double-precision floats
-	dec rcx ; assume n > 0
-	jnz L1
+    vmulps ymm1, ymm1, ymm2
+    vaddps ymm0, ymm0, ymm1
+    vmovups [rdx + rax*4], ymm0
 
-	vzeroupper
-	ret
+    add rax, 8
+    jmp L1
+
+done:
+    ret

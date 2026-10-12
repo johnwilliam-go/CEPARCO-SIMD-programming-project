@@ -1,22 +1,24 @@
-bits 64
-default rel
-
-section .data
-	increment dq 4.25
 section .text
-	global xmmFunc
+
+global xmmFunc
+
 xmmFunc:
-	vmovddup xmm1, [increment]
-	xor edi, edi
-	sar rcx, 1 ; process 2 double-precision floats at a time
+    mov r10, [rsp+40]
+    xor rax, rax
 L1:
-	vmovupd xmm0, [rdx + rdi]
-	vaddpd xmm0, xmm0, xmm1
-	vmovupd [rdx + rdi], xmm0
+    cmp rax, rcx
+    jge done
+    vmovss xmm0, [r8 + rax*4]
+    vmovss xmm1, [r9 + rax*4]
+    vmovss xmm2, [r10 + rax*4]
 
-	add rdi, 8*2 ; move to the next 2 double-precision floats
-	dec rcx ; assume n > 0
-	jnz L1
+    vmulss xmm1, xmm1, xmm2
+    vaddss xmm0, xmm0, xmm1
 
-	vzeroupper
-	ret
+    vmovss [rdx + rax*4], xmm0
+
+    inc rax
+    jmp L1
+
+done:
+    ret
