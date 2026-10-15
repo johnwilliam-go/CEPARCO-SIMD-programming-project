@@ -2,18 +2,26 @@ bits 64
 default rel
 
 section .data
-	increment dq 4.25
+    temp dd 0.0
+
 section .text
-	global noSIMDFunc
+    global noSIMDFunc
+
 noSIMDFunc:
-	xor edi, edi
+    movsxd rcx, ecx
+    mov r10, [rsp+40]
+    xor rax, rax
+    test rcx, rcx
+    jle done
 L1:
-	movsd xmm0, [rdx + rdi]
-	vaddsd xmm0, xmm0, [increment]
-	movsd [rdx + rdi], xmm0
-
-	add rdi, 8
-	dec rcx ; assume n > 0
-	jnz L1
-
-	ret
+    fld dword [r9 + rax*4]
+    fmul dword [r10 + rax*4]
+    fstp dword [temp]
+    fld dword [temp]
+    fadd dword [r8 + rax*4]
+    fstp dword [rdx + rax*4]
+    inc rax
+    cmp rax, rcx
+    jl L1
+done:
+    ret

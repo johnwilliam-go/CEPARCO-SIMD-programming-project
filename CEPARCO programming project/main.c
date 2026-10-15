@@ -6,16 +6,16 @@
 #define n_20 (1 << 20)
 #define n_26 (1 << 26)
 #define n_28 (1 << 28)
-
+#define boundary_handling (1003)
 #define INPUTS_SEED 2
 #define DISPLAY_LIMIT 5
 
 double time_elapsed_cfunc[30];
-double time_elapsed_noSimd[30];
+double time_elapsed_noSIMD[30];
 double time_elapsed_xmm[30];
 double time_elapsed_ymm[30];
 //extern void cFunc(size_t, double[]);
-//extern void noSIMDFunc(size_t, double[]);
+extern void noSIMDFunc(size_t, float[], float[], float[], float[]);
 extern void xmmFunc(size_t, float[], float[], float[], float[]);
 extern void cFunc(size_t, float[], float[], float[], float[]);
 extern void ymmFunc(size_t, float[], float[], float[], float[]);
@@ -40,7 +40,7 @@ float* initializeZeroes(size_t size) {
 float* initializeB(size_t size) {
 	float* b = calloc(size, sizeof(float));
 	for (size_t i = 0; i < size; i++) {
-		b[i] = sinf(i+0.001f);
+		b[i] = sinf(i * 0.001f);
 	}
 	return b;
 }
@@ -48,7 +48,7 @@ float* initializeB(size_t size) {
 float* initializeC(size_t size) {
 	float* c = calloc(size, sizeof(float));
 	for (size_t i = 0; i < size; i++) {
-		c[i] = cosf(i + 0.002f);
+		c[i] = cosf(i * 0.002f);
 	}
 	return c;
 }
@@ -56,7 +56,7 @@ float* initializeC(size_t size) {
 float* initializeD(size_t size) {
 	float* d = calloc(size, sizeof(float));
 	for (size_t i = 0; i < size; i++) {
-		d[i] = sinf(i + 0.003f); 
+		d[i] = sinf(i * 0.003f); 
 	}
 	return d;
 }
@@ -92,7 +92,7 @@ void runPerformanceTests(size_t samples) {
 	float* C = initializeC(samples);
 	float* D = initializeD(samples);
 	float* A_c = calloc(samples, sizeof(float));
-	// float* A_asm = calloc(samples, sizeof(float)); not yet implemented
+	float* A_noSIMD = calloc(samples, sizeof(float));
 	float* A_xmm = calloc(samples, sizeof(float));
 	float* A_ymm = calloc(samples, sizeof(float));
 
@@ -100,42 +100,58 @@ void runPerformanceTests(size_t samples) {
 
 	for (int i = 0; i < 30; i++) {
 		time_elapsed_cfunc[i] = executeAndTimeFunc(cFunc, samples, A_c, B, C, D);
+		time_elapsed_noSIMD[i] = executeAndTimeFunc(noSIMDFunc, samples, A_noSIMD, B, C, D);
 		time_elapsed_xmm[i] = executeAndTimeFunc(xmmFunc, samples, A_xmm, B, C, D);
 		time_elapsed_ymm[i] = executeAndTimeFunc(ymmFunc, samples, A_ymm, B, C, D);
 	}
 
 	if (samples == n_20){
-		printf("Performance tests for vector sizes of 2^20 elements\n");
+		printf("\nPerformance tests for vector sizes of 2^20 elements\n");
 	}
 	else if (samples == n_26){
-		printf("Performance tests for vector sizes of  2^26 elements\n");
+		printf("\nPerformance tests for vector sizes of  2^26 elements\n");
 	}
 	else if (samples == n_28){
-		printf("Performance tests for vector sizes of 2^28 elements\n");
+		printf("\nPerformance tests for vector sizes of 2^28 elements\n");
+	}
+	else if (samples == boundary_handling) {
+		printf("\nPerformance tests for boundary handling where n = 1003 \n");
+	}
+	else {
+		printf("\nPerformance tests for vector sizes of %zu elements\n", samples);
 	}
 
-	printf("C vs Assembly vs XMM vs YMM average runtimes (n=30): %.2lfms vs %.2lfms vs %.2lfms\n", averageTime(time_elapsed_cfunc), averageTime(time_elapsed_xmm), averageTime(time_elapsed_ymm));
+	printf("C vs no SIMD vs XMM vs YMM average runtimes (after 30 runs): %.2lfms vs %.2lfms vs %.2lfms vs %.2lfms\n", averageTime(time_elapsed_cfunc), averageTime(time_elapsed_noSIMD), averageTime(time_elapsed_xmm), averageTime(time_elapsed_ymm));
 	// add nyo nalang for no simd
-	// printf("(no SIMD) Correct values: %d  | Incorrect Values: %d\n", samples - testOutputs(samples, A_c, A_noSIMD), testOutputs(samples, A_c, A_noSIMD));
-	printf("(XMM) Correct values: %d  | Incorrect Values: %d\n", samples-testOutputs(samples, A_c, A_xmm), testOutputs(samples, A_c, A_xmm));
-	printf("(YMM) Correct values: %d  | Incorrect Values: %d\n", samples-testOutputs(samples, A_c, A_ymm), testOutputs(samples, A_c, A_ymm));
+	printf("(no SIMD) Correct values: %d  | Incorrect Values: %d\n", (int)samples - testOutputs(samples, A_c, A_noSIMD), testOutputs(samples, A_c, A_noSIMD));
+	printf("(XMM) Correct values: %d  | Incorrect Values: %d\n", (int)(samples-testOutputs(samples, A_c, A_xmm)), testOutputs(samples, A_c, A_xmm));
+	printf("(YMM) Correct values: %d  | Incorrect Values: %d\n", (int)(samples-testOutputs(samples, A_c, A_ymm)), testOutputs(samples, A_c, A_ymm));
 	
 	
-	printf("+-------------+--------------------+-------------+-------------+\n");
-	printf("| Optimized C | Assembly (No SIMD) |     XMM     |     YMM     |\n");
-	printf("+-------------+--------------------+-------------+-------------+\n");
+	printf("+--------------------------+--------------------------+--------------------------+--------------------------+\n");
+	printf("|       Optimized C        |    Assembly (No SIMD)    |           XMM            |           YMM            |\n");
+	printf("+--------------------------+--------------------------+--------------------------+--------------------------+\n");
 	for (size_t i = 0; i < DISPLAY_LIMIT; i++) {
-		printf("| %11.2f |        placeholder | %11.2f | %11.2f |\n", A_c[i], A_xmm[i], A_ymm[i]);
+		printf("| index %9d: %7.4f | index %9d: %7.4f | index %9d: %7.4f | index %9d: %7.4f |\n",
+			(int)i, A_c[i],
+			(int)i, A_noSIMD[i],
+			(int)i, A_xmm[i],
+			(int)i, A_ymm[i]);
 	}
-	printf("|         .   |                .   |         .   |         .   |\n");
-	printf("|         .   |                .   |         .   |         .   |\n");
-	printf("|         .   |                .   |         .   |         .   |\n");
+	printf("|            .             |            .             |            .             |            .             |\n");
+	printf("|            .             |            .             |            .             |            .             |\n");
+	printf("|            .             |            .             |            .             |            .             |\n");
 	for (size_t i = 0; i < DISPLAY_LIMIT; i++) {
-		printf("| %11.2f |        placeholder | %11.2f | %11.2f |\n", A_c[samples - 1 - i], A_xmm[samples - 1 - i], A_ymm[samples - 1 - i]);
+		printf("| index %9d: %7.4f | index %9d: %7.4f | index %9d: %7.4f | index %9d: %7.4f |\n",
+			(int)(samples - 5 + i), A_c[samples - 5 + i],
+			(int)(samples - 5 + i), A_noSIMD[samples - 5 + i],
+			(int)(samples - 5 + i), A_xmm[samples - 5 + i],
+			(int)(samples - 5 + i), A_ymm[samples - 5 + i]);
 	}
-	printf("+-------------+--------------------+-------------+-------------+\n");
+	printf("+--------------------------+--------------------------+--------------------------+--------------------------+\n");
 
 	free(A_c);
+	free(A_noSIMD);
 	free(A_xmm);
 	free(A_ymm);
 	free(B);
@@ -144,6 +160,7 @@ void runPerformanceTests(size_t samples) {
 }
 
 int main() {
+	runPerformanceTests(boundary_handling);
 	runPerformanceTests(n_20);
 	runPerformanceTests(n_26);
 	runPerformanceTests(n_28);
