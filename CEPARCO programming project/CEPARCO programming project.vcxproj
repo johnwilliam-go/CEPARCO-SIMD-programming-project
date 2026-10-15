@@ -157,6 +157,8 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)noSIMDFunc.obj</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">nasm -f win64 "$(ProjectDir)noSIMDFunc.asm" -o "$(IntDir)noSIMDFunc.obj"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)noSIMDFunc.obj</Outputs>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </CustomBuild>
     <CustomBuild Include="xmmFunc.asm">
       <FileType>Document</FileType>
@@ -168,6 +170,8 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)xmmFunc.obj</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">nasm -f win64 "$(ProjectDir)xmmFunc.asm" -o "$(IntDir)xmmFunc.obj"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)xmmFunc.obj</Outputs>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </CustomBuild>
     <CustomBuild Include="ymmFunc.asm">
       <FileType>Document</FileType>
