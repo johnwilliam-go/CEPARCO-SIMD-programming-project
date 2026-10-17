@@ -1,160 +1,250 @@
 ﻿# CEPARCO-SIMD-programming-project
-This CEPARCO project compares four ways to calculate the same result across a list of numbers.
+This CEPARCO project compares four implementations of the vector triad, a calculation that combines three input arrays into one output array.
 
-- Measures average calculation time over 30 runs.
-- Compares three assembly versions with the C reference.
-- Checks leftover values and prints sample answers.
+- Measures average execution time over 30 runs in Debug and Release.
+- Checks three assembly implementations against a C reference.
+- Tests SIMD boundary handling and displays the first and last five answers.
 
 ## How to run
 
-1. **Prepare the requirements.** Use Windows, Visual Studio with C++ development tools, and NASM, the tool that compiles assembly source. The processor must support AVX, the instructions used by these SIMD functions.
+1. **Prepare the requirements.** Use Windows, Visual Studio 2026 with the C++ development tools and Windows SDK, a set of Windows development files, and NASM, the tool that assembles the `.asm` files. The project uses the v145 compiler toolset. The specification calls for an AVX2-capable CPU, a processor that supports the required vector instructions.
 
-2. **Open the solution.** Open `CEPARCO programming project.slnx` and select **Release** and **x64**. The supplied project requests Visual Studio 2026's v145 toolset, its compiler and build tools.
+2. **Open the solution.** Open `CEPARCO programming project.slnx` in Visual Studio. Select **Debug** and **x64**, the target for 64-bit Intel and AMD instructions.
 
-3. **Assemble all three assembly files.** Build `noSIMDFunc.asm`, `xmmFunc.asm`, and `ymmFunc.asm` as Windows x64 object files, the compiled parts used in the final program.
+3. **Rebuild the project.** Choose **Build > Rebuild Solution** and check that the build succeeds. The project compiles the C files, assembles all three `.asm` files, and links their object files, the compiled parts, into one program. NASM must be available to the project through its configured executable or the system's command lookup.
 
-4. **Compile and link.** Compile `main.c` and `cFunc.c`, then link them with all three object files to form one program. Include `ymmFunc.obj` in this step if the project reports an unresolved `ymmFunc` error.
+4. **Run Debug.** Choose **Debug > Start Without Debugging** or press **Ctrl+F5**. No input is needed. The program runs 1,003, 2^20, 2^26, and 2^28 elements in that order. Wait for all four cases to finish and save their output before closing the console.
 
-5. **Run the program.** Start the resulting console program. The `main()` function runs all four sizes without asking for input.
+5. **Run Release.** Select **Release** and **x64**, rebuild the solution, and start without debugging again. Finish one configuration before starting the other so the two processes do not compete for memory.
 
-6. **Review the output.** Check the average times, matching-value counts, and sample answers for each size. All three assembly versions should report zero incorrect values.
+6. **Check and record the results.** Each case should identify its build, show average times, and report zero incorrect values for scalar assembly, XMM, and YMM. Save one screenshot per size for each build, including the timing line, correctness lines, and full sample table.
 
-The build produces one console program.
+The largest case needs 7 GiB for its arrays, where one GiB is 2^30 bytes, and can take several minutes to finish. Both configurations use the same inputs, sizes, and number of repetitions.
 
 ## a) Project report
 
 ### i. Execution time
 
-The program calculates `A[i] = B[i] + C[i] * D[i]`, where `i` is a position in an array, a list of values. Each value uses `float`, a 32-bit format for numbers with fractional parts.
+The kernel, the calculation being timed, is `A[i] = B[i] + C[i] * D[i]`, where `i` selects one position in an array, a list of values. All four arrays use `float`, a 32-bit format for numbers with fractional parts.
 
-The four versions are C, scalar assembly, XMM SIMD, and YMM SIMD. Assembly expresses operations as processor instructions; scalar code handles one value per arithmetic instruction, while SIMD, single instruction, multiple data, applies an operation to a group of values. XMM and YMM are processor registers, small storage areas inside the processor, that hold four and eight floats in this project. The assembly uses x64, the 64-bit instruction set for Intel and AMD processors.
+C provides the reference calculation. Scalar assembly processes one float per arithmetic instruction. SIMD, single instruction, multiple data, processes a group at once: the XMM version uses four floats per group, while YMM uses eight. These names refer to processor registers, small storage areas used by instructions.
 
-These four output images contain the timings, comparison counts, and first and last five answers for each case.
+The inputs use the following formulas. `sinf` and `cosf` calculate sine and cosine with float values.
+
+```c
+B[i] = sinf(i * 0.001f);
+C[i] = cosf(i * 0.002f);
+D[i] = sinf(i * 0.003f);
+```
+
+Each version has its own output array, and the program runs each kernel 30 times for each size before reporting the mean in milliseconds. The eight screenshots below contain the timing, correctness counts, and first and last five answers. The correctness and boundary sections refer to this same evidence.
+
+#### Debug results
 
 **1,003 elements**
 
-![Program output for 1003 elements](docs/images/test-1003.png)
+![Debug output for 1003 elements, including timing, correctness checks, and sample answers](docs/images/debug-1003.png)
 
 **2^20 elements**
 
-![Program output for 2 to the 20 elements](docs/images/test-2-20.png)
+![Debug output for 2 to the 20 elements, including timing, correctness checks, and sample answers](docs/images/debug-2-20.png)
 
 **2^26 elements**
 
-![Program output for 2 to the 26 elements](docs/images/test-2-26.png)
+![Debug output for 2 to the 26 elements, including timing, correctness checks, and sample answers](docs/images/debug-2-26.png)
 
 **2^28 elements**
 
-![Program output for 2 to the 28 elements](docs/images/test-2-28.png)
+![Debug output for 2 to the 28 elements, including timing, correctness checks, and sample answers](docs/images/debug-2-28.png)
+
+#### Release results
+
+**1,003 elements**
+
+![Release output for 1003 elements, including timing, correctness checks, and sample answers](docs/images/release-1003.png)
+
+**2^20 elements**
+
+![Release output for 2 to the 20 elements, including timing, correctness checks, and sample answers](docs/images/release-2-20.png)
+
+**2^26 elements**
+
+![Release output for 2 to the 26 elements, including timing, correctness checks, and sample answers](docs/images/release-2-26.png)
+
+**2^28 elements**
+
+![Release output for 2 to the 28 elements, including timing, correctness checks, and sample answers](docs/images/release-2-28.png)
 
 ### ii. Comparison of execution times
 
-This table records the average milliseconds per calculation call over 30 runs; lower is faster.
+This table records the average milliseconds per kernel call over 30 runs. Lower is faster.
+
+| Elements | Build | C (ms) | Scalar assembly (ms) | XMM (ms) | YMM (ms) |
+| ---: | --- | ---: | ---: | ---: | ---: |
+| 1,003 | Debug | 0.005943 | 0.000718 | 0.000619 | 0.015142 |
+| 1,003 | Release | 0.001744 | 0.000922 | 0.000826 | 0.029092 |
+| 1,048,576 (2^20) | Debug | 34.102181 | 0.396876 | 0.205758 | 0.231519 |
+| 1,048,576 (2^20) | Release | 0.469390 | 0.753358 | 0.465467 | 0.772694 |
+| 67,108,864 (2^26) | Debug | 1442.669886 | 212.460247 | 129.072939 | 163.380918 |
+| 67,108,864 (2^26) | Release | 111.139499 | 108.533342 | 150.671488 | 148.040521 |
+| 268,435,456 (2^28) | Debug | 9879.551944 | 8445.045522 | 8544.024293 | 8432.207826 |
+| 268,435,456 (2^28) | Release | 6977.915610 | 7074.494853 | 7172.852829 | 7055.181878 |
+
+Speedup is the reference time divided by the comparison time: a value above 1 means the comparison was faster, while a value below 1 means it was slower. For example, Release XMM versus scalar at 2^20 is `0.753358 / 0.465467 = 1.618` times as fast.
+
+This table compares the kernels within each build. Ratios use the displayed times and are rounded to three decimal places.
+
+| Elements | Build | Scalar vs C | XMM vs C | YMM vs C | XMM vs scalar | YMM vs scalar |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| 1,003 | Debug | 8.277 | 9.601 | 0.392 | 1.160 | 0.047 |
+| 1,003 | Release | 1.892 | 2.111 | 0.060 | 1.116 | 0.032 |
+| 1,048,576 (2^20) | Debug | 85.927 | 165.739 | 147.298 | 1.929 | 1.714 |
+| 1,048,576 (2^20) | Release | 0.623 | 1.008 | 0.607 | 1.618 | 0.975 |
+| 67,108,864 (2^26) | Debug | 6.790 | 11.177 | 8.830 | 1.646 | 1.300 |
+| 67,108,864 (2^26) | Release | 1.024 | 0.738 | 0.751 | 0.720 | 0.733 |
+| 268,435,456 (2^28) | Debug | 1.170 | 1.156 | 1.172 | 0.988 | 1.002 |
+| 268,435,456 (2^28) | Release | 0.986 | 0.973 | 0.989 | 0.986 | 1.003 |
+
+The next table divides Debug time by Release time for the same kernel. Values above 1 mean Release was faster.
 
 | Elements | C | Scalar assembly | XMM | YMM |
 | ---: | ---: | ---: | ---: | ---: |
-| 1,003 | 0.00 | 0.00 | 0.00 | 0.00 |
-| 1,048,576 (2^20) | 0.42 | 0.72 | 0.40 | 0.46 |
-| 67,108,864 (2^26) | 110.98 | 128.12 | 122.55 | 111.62 |
-| 268,435,456 (2^28) | 10,377.34 | 10,026.15 | 9,821.10 | 9,607.71 |
+| 1,003 | 3.408 | 0.779 | 0.749 | 0.520 |
+| 1,048,576 (2^20) | 72.652 | 0.527 | 0.442 | 0.300 |
+| 67,108,864 (2^26) | 12.981 | 1.958 | 0.857 | 1.104 |
+| 268,435,456 (2^28) | 1.416 | 1.194 | 1.191 | 1.195 |
 
-Speedup is the reference time divided by the comparison time. Above 1 means the comparison took less time; below 1 means it took more time.
+C gains the most from Release at 2^20, falling from 34.102181 ms to 0.469390 ms for a 72.652x speedup, while its gain at 2^26 falls to 12.981x. The assembly results do not follow a single pattern: all three are slower in Release at 1,003 and 2^20 elements, while all three are faster at 2^28.
 
-This table gives speedups calculated from the displayed times, rounded to three decimal places.
+XMM has the lowest Release mean at 1,003 and 2^20 elements, scalar assembly at 2^26, and C at 2^28. The XMM lead over C at 2^20 is only 0.84%, and no range or standard deviation, a measure of variation between runs, is printed. That gap does not establish a repeatable winner.
 
-| Elements | Scalar vs C | XMM vs C | YMM vs C | XMM vs scalar | YMM vs scalar |
-| ---: | ---: | ---: | ---: | ---: | ---: |
-| 1,048,576 | 0.583 | 1.050 | 0.913 | 1.800 | 1.565 |
-| 67,108,864 | 0.866 | 0.906 | 0.994 | 1.045 | 1.148 |
-| 268,435,456 | 1.035 | 1.057 | 1.080 | 1.021 | 1.044 |
-
-For example, XMM versus scalar at 2^20 is `0.72 / 0.40 = 1.800`. No ratio is given for 1,003 elements because its displayed times round to zero.
-
-The winner changed. XMM led at 2^20, C at 2^26, and YMM at 2^28. These rankings describe the supplied results; the program does not report the spread of its 30 measurements.
+Six decimal places keep the boundary times from appearing as zero. More printed digits do not improve timing accuracy, and ratios for these short calls are sensitive to measurement overhead.
 
 ### iii. Correctness of C
 
-C supplies the reference. The program has no independent check of every C answer, so agreement between versions cannot prove the formula correct for all inputs.
+The [Debug results](#debug-results) and [Release results](#release-results) show the C index-0 sanity check as `CORRECT` for every size. At that index, the inputs are `B[0] = 0`, `C[0] = 1`, and `D[0] = 0`, giving `A[0] = 0 + 1 * 0 = 0`. The output is `0.0000` in every case.
 
-At index 0, the input formulas give `B[0] = sin(0) = 0`, `C[0] = cos(0) = 1`, and `D[0] = sin(0) = 0`, so `A[0] = 0` matches `0.0000` in the [1,003-element output](docs/images/test-1003.png).
+C acts as the answer key for the other kernels, as allowed by the specification, but the program checks only its first value against a known answer and has no separate full-array check of C itself. The sample columns show the first and last five answers for inspection.
 
-That is one manual check. It is not a full test of C.
+After all 30 repetitions, `testOutputs()` compares each assembly result with C using `!=`, the C operator for unequal numeric values, and checks the stored values with no rounding tolerance. The four-decimal sample display is not used in that comparison, and the program checks the final arrays rather than every repetition.
 
-### iv. Correctness of x64 assembly without SIMD
+### iv. Correctness of x86-64 assembly without SIMD
 
-The scalar version matched C at every element in all four cases, with correct-value counts of 1,003, 1,048,576, 67,108,864, and 268,435,456 and zero incorrect values in the four output images.
+Scalar assembly reports `x86-64 kernel output is CORRECT` for all four sizes in both builds. No value differs from C. The correct counts of 1,003, 1,048,576, 67,108,864, and 268,435,456 equal the full array lengths, so the check covers every final output rather than a sample.
 
-The comparison uses `!=`, the C operator that checks whether values differ. It checks stored values without allowing rounding differences; the displayed samples are rounded to four decimal places.
+The scalar rows in the [Debug results](#debug-results) and [Release results](#release-results) provide this evidence. This version uses XMM registers, but its multiply and add instructions operate on one float. A register name alone does not make the code SIMD.
 
-In the [2^26 output](docs/images/test-2-26.png), scalar assembly records 67,108,864 matches. It uses XMM registers, but its arithmetic instructions operate on one float.
+### v. Correctness of SIMD XMM
 
-### v. Correctness of XMM SIMD
+XMM processes four floats per main-loop pass. It reports `SIMD XMM kernel output is CORRECT` with zero incorrect values at every size in both configurations.
 
-XMM reported zero incorrect values for all four sizes. Each main-loop pass handles four floats, and every result is compared with C.
+For example, the 2^26 screenshots in the [Debug results](#debug-results) and [Release results](#release-results) each show 67,108,864 matches with C. The 1,003-element screenshots also check the three values left after the complete groups of four.
 
-The [2^20 output](docs/images/test-2-20.png) shows 1,048,576 matches. The [1,003-element output](docs/images/test-1003.png) includes three remaining values that do not fill a complete group of four.
+### vi. Correctness of SIMD YMM
 
-### vi. Correctness of YMM SIMD
+YMM processes eight floats per main-loop pass using the same multiply-then-add formula, and every size in both builds reports `SIMD YMM kernel output is CORRECT` with zero incorrect values.
 
-YMM matched C for every element in all four cases. It handles eight floats per main-loop pass and uses the same multiply-then-add calculation.
-
-The [2^28 output](docs/images/test-2-28.png) records 268,435,456 correct values and zero incorrect values. This count covers the full array, beyond the ten sample answers shown in the table.
+The 2^28 screenshots in the [Debug results](#debug-results) and [Release results](#release-results) each show 268,435,456 matches, covering the full final array beyond the ten answers printed in the sample table.
 
 ### vii. Boundary cases for XMM and YMM
 
-For 1,003 elements, both SIMD versions process 1,000 values in complete groups before a scalar tail, a loop that handles remaining values one at a time, finishes the calculation.
+The 1,003-element case leaves three values after the complete SIMD groups. A scalar tail, a loop that handles the remaining values one at a time, finishes each calculation.
 
-This table shows the split.
+This table shows how the two SIMD versions divide the work.
 
-| Version | Complete groups | Remaining indices |
-| --- | ---: | --- |
-| XMM | 250 groups of 4 | 1,000, 1,001, 1,002 |
-| YMM | 125 groups of 8 | 1,000, 1,001, 1,002 |
+| Version | Complete groups | Values processed in groups | Remaining indices |
+| --- | --- | ---: | --- |
+| XMM | 250 groups of 4 | 1,000 | 1,000, 1,001, 1,002 |
+| YMM | 125 groups of 8 | 1,000 | 1,000, 1,001, 1,002 |
 
-The [boundary output](docs/images/test-1003.png) shows `0.7827`, `0.7843`, and `0.7858` at those final indices in all four columns. Both SIMD versions report 1,003 matches.
+Both boundary screenshots, under [Debug](#debug-results) and [Release](#release-results), show `0.7827`, `0.7843`, and `0.7858` at those final three indices in every column. XMM and YMM each report 1,003 matches and zero incorrect values.
 
-The final values were not skipped. This case tests a remainder of three, but the program does not test every remainder or sizes below five.
+The tails include every remaining element. This test covers a remainder of three; it does not test every possible remainder or arrays shorter than five elements.
 
 ### viii. Analysis
 
-RAM is the computer's working memory. We ran the four tests on the following computer.
+#### Test environment and timing
 
-| Part | Specification |
-| --- | --- |
-| Computer | Acer Predator Triton 300 |
-| Memory | 16 GB RAM |
+We used a computer with 16 GB of physical RAM, its installed working memory. Both Debug/x64 and Release/x64 ran in Visual Studio 2026 on Windows, with 30 calls per kernel for each size. These timings describe the tested setup.
 
-No measurements from a second hardware platform are included.
+`QueryPerformanceCounter`, a Windows timer, measures the interval around each kernel call, with allocation, input generation, correctness checks, and printing outside that interval. Every repetition runs C, scalar assembly, XMM, then YMM, with no separate untimed warm-up call.
 
-`QueryPerformanceCounter`, a Windows timer, measures each calculation call. Input generation, answer checks, and printing are outside that interval; each repetition runs C, scalar, XMM, then YMM, with no separate untimed run before measurement.
+#### Debug and Release
 
-If arithmetic were the sole cost and group instructions cost the same as scalar instructions, four or eight values per instruction would suggest 4x or 8x gains. The results fall short of that model. Each answer still requires three 4-byte inputs and one 4-byte output, plus loop control and two arithmetic operations.
+Debug keeps compiler optimizations, changes intended to reduce runtime, turned off so the program is easier to inspect. Release enables them. That distinction matters for C: its Release speedups are 3.408x, 72.652x, 12.981x, and 1.416x across the four sizes.
 
-C can use SIMD. MSVC, Microsoft's C compiler, supports auto-vectorization, which converts suitable loops into SIMD instructions; the benchmark output does not show which instructions it selected.
+The three NASM files provide the same assembly instruction bodies to both builds, so switching to Release does not optimize those handwritten instructions in the way it optimizes C. Differences in their timings can come from the surrounding build, memory and cache state, or background work. Cache is small, fast memory near the processor. These measurements do not isolate those causes.
 
-Seven arrays remain allocated: three inputs and four outputs. Their combined storage is 28,084 bytes, 28 MiB, 1.75 GiB, and 7 GiB for the four sizes; MiB means 2^20 bytes and GiB means 2^30 bytes.
+The 165.739x Debug XMM speedup over C at 2^20 compares handwritten SIMD with a C build that has compiler optimizations disabled; it cannot be read as a four-lane hardware speedup. Release C is the more useful baseline for judging whether assembly improves on optimized C.
 
-The jump at 2^28 needs more measurement. The arrays grow by a factor of four from 2^26, but calculation times grow by about 78 to 94 times. The reported 16 GB capacity does not establish a memory shortage, and no measurements identify the cause of this jump.
+#### Memory-bound or compute-bound
 
-Cache, small fast memory near the processor, can affect repeated array access, while memory traffic, processor speed, and background work can change timing; these results do not separate their effects.
+For large optimized arrays, the vector triad is memory-bound: moving data limits the useful gain from faster arithmetic. Each element performs two FLOPs, floating-point operations, through one multiply and one add, while reading three 4-byte values and writing one 4-byte result.
+
+Arithmetic intensity, the amount of arithmetic per byte accessed, is:
+
+```text
+2 FLOPs / (3 reads × 4 bytes + 1 write × 4 bytes)
+= 2 / 16
+= 0.125 FLOP per byte
+```
+
+There is little arithmetic for each byte moved. Wider SIMD instructions reduce the arithmetic instruction count, but every result still needs the same inputs and output, making memory bandwidth, the amount of data moved per second, the main concern for large optimized cases.
+
+This describes the workload. It does not mean every measured call reached a RAM bandwidth limit: Debug overhead, short calls, and cache reuse can dominate before that point. The 16-byte count describes explicit array access, not a direct measurement of physical memory traffic.
+
+#### SIMD speedup and optimized C
+
+A model that counts only arithmetic suggests 4x gains for XMM and 8x for YMM, but it leaves out memory access, loop control, and tail handling. It also assumes the C baseline performs scalar work; MSVC can turn suitable C loops into SIMD through auto-vectorization. No compiler instruction listing was checked here, so we do not claim which vector instructions this C build used.
+
+YMM did not beat C in any Release case. At 2^26, it took 148.040521 ms against C's 111.139499 ms, or 1.332x as long. At 2^28, the difference narrowed to about 1.11%, with C still ahead. Wider registers did not guarantee a lower time.
+
+YMM also takes longer than XMM in both 1,003-element tests. The cause remains unknown. These short timings include call and timer overhead, and there is no warm-up pass, so the result should not be used as a general comparison of register widths.
+
+#### The largest test
+
+Seven arrays stay allocated: three inputs and four outputs. This table shows their combined storage.
+
+| Elements | Storage for seven float arrays |
+| --- | ---: |
+| 1,003 | 28,084 bytes |
+| 2^20 | 28 MiB |
+| 2^26 | 1.75 GiB |
+| 2^28 | 7 GiB |
+
+One MiB is 2^20 bytes. A 2^30 test would need 28 GiB for the arrays alone, exceeding the computer's 16 GB of physical RAM. The specification permits 2^28 or 2^29 as smaller cases. We used 2^28, which reduces the array storage to 7 GiB.
+
+From 2^26 to 2^28, the arrays grow four times, but Release times grow by 47.606x to 65.183x. Array size alone does not explain that jump. Memory pressure and paging, where Windows moves memory contents to disk and reads them back when needed, may contribute, but their cost was not measured.
+
+Installed RAM does not establish how much memory was available to the program during these runs. No page-fault or disk-activity measurements were recorded, so the timings cannot confirm paging as the cause. The output arrays are allocated with `calloc`, which supplies zeroed memory, without a separate first-write pass; their first timed writes may also incur page-initialization costs.
+
+At 2^28, all four Release times are within 2.8% of the fastest result, while C's gain from Release has fallen to 1.416x compared with 72.652x at 2^20. This convergence fits a shared data-movement bottleneck that faster arithmetic alone cannot remove.
+
+The final five answers at 2^28 are all `-0.9025` because converting those neighboring indices to `float` loses integer precision at that scale and gives them the same input values. The full-array comparison matters more than those five repeated samples.
 
 ### ix. Problems, solutions, and insights
 
-This table records issues in the code and measurement method.
+This table records issues in the project and how they were handled.
 
-| Issue | Handling or limit |
+| Issue | Handling or finding |
 | --- | --- |
-| 1,003 does not divide into groups of four or eight | The existing scalar tails finish the last three values; both SIMD versions match C. |
-| C acts as the reference | Report agreement with C and the manual index-0 check without claiming an independent full C test. |
-| Small times print as `0.00ms` | Treat them as rounded values and omit speedup ratios for that case. |
-| Test order is fixed and no timing spread is reported | Treat the rankings as observations from these results, rather than a fixed order of performance. |
-| The supplied Release/x64 project produced an unresolved `ymmFunc` link error | Include all three compiled assembly files in step 4 of [How to run](#how-to-run). |
+| 1,003 does not divide into groups of four or eight | Scalar tails process the last three elements. Both builds report zero differences from C. |
+| Two-decimal timings displayed short calls as `0.00ms` | Six decimal places preserve the boundary-test timing in the output. |
+| The C heading did not identify the configuration | The timing line and C column now state `DEBUG` or `RELEASE`. |
+| Correctness counts needed a clear status | Each assembly check prints `CORRECT` or `INCORRECT`; C has a separate index-0 sanity check. |
+| The XMM tail returned through the main-loop condition | Returning to `last` removes an extra comparison while keeping the same answers. |
+| The YMM object was not included as expected during linking | The project lists the object output without a trailing space so the build can link the assembly function. |
+| The requested 2^30 arrays would need 28 GiB | Use the allowed 2^28 case, which needs 7 GiB. Its timing increase exceeds the fourfold growth in array size. |
+| The last five values at 2^28 repeat | Float index rounding explains the repeated inputs. Full-array comparisons check more than these samples. |
+| Mean timings do not show variation | Report the observed rankings without treating small gaps as fixed performance advantages. |
 
-The widest registers did not win at every size. Correctness and speed answer different questions: the comparisons show agreement for the tested inputs, while the timings depend on the work and conditions around each call.
+The main insight is that more values per instruction do not ensure a faster program. Optimized C was fastest in the largest Release test, and the gap between kernels was under 2.8%. That pattern points to data movement as the stronger limit.
+
+The results cover these inputs and sizes. C remains the reference, the output checks use the final arrays, and the timing order is fixed. The program also does not check for allocation failure before using the arrays, so available memory remains a practical limit.
 
 ## b) Source files and Visual Studio project
 
-The project contains the C and assembly source files, the Visual Studio solution, and the report images.
+The following structure shows the source, project files, and images used by this report. Generated build folders are omitted.
 
 ```text
 .
@@ -170,19 +260,27 @@ The project contains the C and assembly source files, the Visual Studio solution
 │   ├── CEPARCO programming project.vcxproj.filters
 │   └── CEPARCO programming project.vcxproj.user
 └── docs/images/
-    ├── test-1003.png
-    ├── test-2-20.png
-    ├── test-2-26.png
-    └── test-2-28.png
+    ├── debug-1003.png
+    ├── debug-2-20.png
+    ├── debug-2-26.png
+    ├── debug-2-28.png
+    ├── release-1003.png
+    ├── release-2-20.png
+    ├── release-2-26.png
+    └── release-2-28.png
 ```
 
-This table explains the main source and project files.
+This table explains the files needed to understand and build the project.
 
 | File | Purpose |
 | --- | --- |
-| `main.c` | Generates inputs, runs 30 timed calls per version, compares answers, and prints samples |
-| `cFunc.c` | Calculates `A[i] = B[i] + C[i] * D[i]` in C and supplies the reference answers |
-| `noSIMDFunc.asm` | Calculates one value per loop pass using scalar instructions |
-| `xmmFunc.asm` | Calculates four values per group and handles remaining values one at a time |
-| `ymmFunc.asm` | Calculates eight values per group and handles remaining values one at a time |
-| Visual Studio files | Define the solution, project build settings, file grouping, and per-user settings |
+| `main.c` | Generates inputs, calls each kernel 30 times, measures runtime, checks the final outputs, and prints the results |
+| `cFunc.c` | Computes the vector triad in C and supplies the reference answers |
+| `noSIMDFunc.asm` | Computes one float at a time with scalar assembly |
+| `xmmFunc.asm` | Computes groups of four floats and finishes the remaining elements with a scalar tail |
+| `ymmFunc.asm` | Computes groups of eight floats and finishes the remaining elements with a scalar tail |
+| `.slnx` | Opens the solution in Visual Studio |
+| `.vcxproj` | Defines the build configurations, compiler settings, and NASM assembly steps |
+| `.vcxproj.filters` | Groups the files shown in Solution Explorer |
+| `.vcxproj.user` | Stores per-user Visual Studio settings |
+| `docs/images/` | Stores the Debug and Release screenshots embedded in this report |
