@@ -176,13 +176,13 @@
     <CustomBuild Include="ymmFunc.asm">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">nasm -f win64 "$(ProjectDir)ymmFunc.asm" -o "$(IntDir)ymmFunc.obj"</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)ymmFunc.obj </Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)ymmFunc.obj</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">nasm -f win64 "$(ProjectDir)ymmFunc.asm" -o "$(IntDir)ymmFunc.obj"</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)ymmFunc.obj </Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)ymmFunc.obj</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">nasm -f win64 "$(ProjectDir)ymmFunc.asm" -o "$(IntDir)ymmFunc.obj"</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)ymmFunc.obj </Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)ymmFunc.obj</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">nasm -f win64 "$(ProjectDir)ymmFunc.asm" -o "$(IntDir)ymmFunc.obj"</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)ymmFunc.obj </Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)ymmFunc.obj</Outputs>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
