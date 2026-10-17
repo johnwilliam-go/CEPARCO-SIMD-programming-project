@@ -10,6 +10,12 @@
 #define INPUTS_SEED 2
 #define DISPLAY_LIMIT 5
 
+#ifdef _DEBUG
+#define BUILD_CONFIG "DEBUG"
+#else
+#define BUILD_CONFIG "RELEASE"
+#endif
+
 double time_elapsed_cfunc[30];
 double time_elapsed_noSIMD[30];
 double time_elapsed_xmm[30];
@@ -121,11 +127,15 @@ void runPerformanceTests(size_t samples) {
 		printf("\nPerformance tests for vector sizes of %zu elements\n", samples);
 	}
 
-	printf("C vs no SIMD vs XMM vs YMM average runtimes (after 30 runs): %.2lfms vs %.2lfms vs %.2lfms vs %.2lfms\n", averageTime(time_elapsed_cfunc), averageTime(time_elapsed_noSIMD), averageTime(time_elapsed_xmm), averageTime(time_elapsed_ymm));
-	// add nyo nalang for no simd
-	printf("(no SIMD) Correct values: %d  | Incorrect Values: %d\n", (int)samples - testOutputs(samples, A_c, A_noSIMD), testOutputs(samples, A_c, A_noSIMD));
-	printf("(XMM) Correct values: %d  | Incorrect Values: %d\n", (int)(samples-testOutputs(samples, A_c, A_xmm)), testOutputs(samples, A_c, A_xmm));
-	printf("(YMM) Correct values: %d  | Incorrect Values: %d\n", (int)(samples-testOutputs(samples, A_c, A_ymm)), testOutputs(samples, A_c, A_ymm));
+	printf("[%s build] C vs no SIMD vs XMM vs YMM average runtimes (after 30 runs): %.6lfms vs %.6lfms vs %.6lfms vs %.6lfms\n", BUILD_CONFIG, averageTime(time_elapsed_cfunc), averageTime(time_elapsed_noSIMD), averageTime(time_elapsed_xmm), averageTime(time_elapsed_ymm));
+	int err_noSIMD = testOutputs(samples, A_c, A_noSIMD);
+	int err_xmm = testOutputs(samples, A_c, A_xmm);
+	int err_ymm = testOutputs(samples, A_c, A_ymm);
+	printf("(C) Index-0 sanity check: A[0] = %.4f (expected 0 + 1 * 0 = 0.0000) -> %s\n", A_c[0], A_c[0] == 0.0f ? "CORRECT" : "INCORRECT");
+	printf("(C) Reference for assembly comparisons; no independent full-array C check.\n");
+	printf("(no SIMD) Correct values: %d  | Incorrect Values: %d  -> x86-64 kernel output is %s\n", (int)samples - err_noSIMD, err_noSIMD, err_noSIMD == 0 ? "CORRECT" : "INCORRECT");
+	printf("(XMM) Correct values: %d  | Incorrect Values: %d  -> SIMD XMM kernel output is %s\n", (int)samples - err_xmm, err_xmm, err_xmm == 0 ? "CORRECT" : "INCORRECT");
+	printf("(YMM) Correct values: %d  | Incorrect Values: %d  -> SIMD YMM kernel output is %s\n", (int)samples - err_ymm, err_ymm, err_ymm == 0 ? "CORRECT" : "INCORRECT");
 	
 	
 	printf("+--------------------------+--------------------------+--------------------------+--------------------------+\n");
