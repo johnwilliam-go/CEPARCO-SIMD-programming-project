@@ -34,6 +34,6 @@ last:
     vaddss xmm0, xmm0, xmm1
     vmovss [rdx + rax*4], xmm0
     inc rax
-    jmp L1
+    jmp last
 done:
     ret
