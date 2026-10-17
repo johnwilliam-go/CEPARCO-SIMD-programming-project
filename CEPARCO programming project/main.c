@@ -139,8 +139,15 @@ void runPerformanceTests(size_t samples) {
 	
 	
 	printf("+--------------------------+--------------------------+--------------------------+--------------------------+\n");
-	printf("|       Optimized C        |    Assembly (No SIMD)    |           XMM            |           YMM            |\n");
+
+	printf("| %-24s | %-24s | %-24s | %-24s |\n",
+    "C (" BUILD_CONFIG ")",
+    "Assembly (No SIMD)",
+    "XMM",
+    "YMM");
+
 	printf("+--------------------------+--------------------------+--------------------------+--------------------------+\n");
+	
 	for (size_t i = 0; i < DISPLAY_LIMIT; i++) {
 		printf("| index %9d: %7.4f | index %9d: %7.4f | index %9d: %7.4f | index %9d: %7.4f |\n",
 			(int)i, A_c[i],
